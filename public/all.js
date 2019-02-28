@@ -1,43 +1,42 @@
 let jsonData;
 let macAddresses;
 
-// Get the data
-fetch('data.json')
-  .then(function(response) {
-      return response.json();
-  })
-  .then(function(data) {
+window.addEventListener("load", getData);
 
-    jsonData = data;
-    macAddresses = getMacAddresses();
-    setTimeout(drawChart, 500);
-});
+async function getData() {
+    const response = await fetch('data.json');
+    try {
+        jsonData = await response.json();
+        macAddresses = await getMacAddresses();
+        setTimeout(drawChart, 500);        
+    } catch (e) {
+        alert(e);
+    }
+}
 
-// get unique MAC addresses that are in the data
-function getMacAddresses() {
-    const set = new Set(jsonData.map(row => row.macAddress));
+// get unique MAC addresses from the JSON data
+async function getMacAddresses() {
+    const set = new Set(jsonData.map(row => row.mac_address));
     const addresses = Array.from(set);
     addresses.sort();
-
-    // remove the fake addresses
-    const filtered = addresses.filter(a => !(a === '12:12' || a === 'F8:SA:MP:LE:MA:CC'));
-    return filtered;
+    console.log(addresses);
+    return addresses;
 }
 
 function drawChart() {
     const data = new google.visualization.DataTable();
     data.addColumn('date', 'Date');
     macAddresses.forEach(address => {
-        // the data hold temperature, but the label is the device macAddress
+        // the data holds temperature values, but the label is the device macAddress
         data.addColumn('number', address);
     });
 
     // build a sparse array for each device to make Google Chart's happy
     macAddresses.forEach((macAddress, i) => {
-        const sensorData = jsonData.filter(row => row.macAddress === macAddress);
+        const sensorData = jsonData.filter(row => row.mac_address === macAddress);
         const rows = sensorData.map(obj => {
             const row = new Array(macAddresses.length + 1);
-            row[0] = new Date(obj.timestamp);
+            row[0] = new Date(obj.recorded_at);
             row[i+1] = obj.temperature;
             return row;
         }); 
